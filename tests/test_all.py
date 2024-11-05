@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import argparse
 import io
 import os
 from pathlib import Path
@@ -13,20 +12,7 @@ import wmfdata as wmf
 
 this_directory = str(Path(__file__).parent.resolve())
 
-# To do: This way of specifying the Hive database makes it impossible to
-# import this as a module. It would be better to have the test functions
-# take the database as an argument, and look for and pass a command line
-# argument only if it's being run as a script.
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "hive_database",
-    help=
-        "The Hive database where test tables will be written. It's best to "
-        "choose your own database."
-)
-
-args = parser.parse_args()
-hive_db = args.hive_database
+hive_db = os.environ.get("HIVE_DB") or os.environ.get("USER")
 
 # Theoretically, the passed database could be used to inject SQL (e.g. passing
 # 'wmf.webrequest --' in an attempt to drop webrequest). Practically, it
@@ -87,6 +73,7 @@ def set_up_mariadb_table():
 
 def clean_tables():
     wmf.hive.run([
+      f"CREATE DATABASE IF NOT EXISTS {hive_db};",
       f"DROP TABLE IF EXISTS {hive_db}.wmfdata_test_1",
       f"DROP TABLE IF EXISTS {hive_db}.wmfdata_test_2",
       f"DROP TABLE IF EXISTS {hive_db}.wmfdata_test_empty",
